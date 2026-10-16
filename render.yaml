@@ -1,0 +1,27 @@
+# Blueprint Render pour le backend FastAPI de paris-immo-ia/ (offre gratuite).
+# Guide complet : paris-immo-ia/DEPLOIEMENT.md
+services:
+  - type: web
+    name: paris-immo-ia-api
+    runtime: python
+    plan: free
+    region: frankfurt
+    rootDir: paris-immo-ia # inclut shared/ (base de connaissances des quartiers)
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_URL # chaîne de connexion Neon, demandée à la création
+        sync: false
+      - key: FRONTEND_URL # URL Vercel, pour les liens des emails d'alerte
+        sync: false
+      - key: ANTHROPIC_API_KEY # optionnel : sans clé, extracteur à règles
+        sync: false
+      - key: OPENAI_API_KEY # optionnel : Whisper (micro) et/ou GPT-4o
+        sync: false
+      - key: GOOGLE_MAPS_API_KEY # optionnel : trajets réels en transports
+        sync: false
+      - key: ALERTS_INTERVAL_SECONDS # vérifie les alertes quand le service est éveillé
+        value: "900"

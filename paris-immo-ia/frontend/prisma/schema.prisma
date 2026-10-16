@@ -49,10 +49,11 @@ model User {
 }
 
 model Property {
-  id      String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ownerId String         @map("owner_id") @db.Uuid
-  owner   User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  status  PropertyStatus @default(ACTIVE)
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId    String         @map("owner_id") @db.Uuid
+  owner      User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  status     PropertyStatus @default(ACTIVE)
+  photoFiles Photo[]
 
   title          String
   description    String
@@ -83,6 +84,7 @@ model Property {
   hasDishwasher  Boolean @default(false) @map("has_dishwasher")
   petsAllowed    Boolean @default(false) @map("pets_allowed")
 
+  // URL publiques : "/photos/<id>.jpg" pour les photos envoyées, ou URL externes
   photos        Json      @default("[]")
   availableFrom DateTime? @map("available_from")
   createdAt     DateTime  @default(now()) @map("created_at")
@@ -91,6 +93,20 @@ model Property {
   @@index([status, createdAt])
   @@index([quartier])
   @@map("properties")
+}
+
+// Photos envoyées par les propriétaires, stockées en base pour fonctionner sur un
+// hébergement sans disque persistant (Vercel). Non utilisée par le backend Python.
+model Photo {
+  id         String   @id @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  mimeType   String   @map("mime_type")
+  data       Bytes
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([propertyId])
+  @@map("photos")
 }
 
 model SearchAlert {

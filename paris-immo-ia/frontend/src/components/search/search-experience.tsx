@@ -6,7 +6,7 @@ import { AlertTriangle, ArrowUp, Home, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { sendChat } from "@/lib/api";
+import { sendChat, warmUpBackend } from "@/lib/api";
 import type { ChatMessage, ChatResponse, SearchCriteria } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -36,6 +36,8 @@ export function SearchExperience() {
   const [error, setError] = useState<string | null>(null);
   const dictationBase = useRef("");
   const scroller = useRef<HTMLDivElement>(null);
+
+  useEffect(warmUpBackend, []);
 
   useEffect(() => {
     scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: "smooth" });
@@ -86,7 +88,8 @@ export function SearchExperience() {
           ))}
           {loading && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Analyse de vos critères et recherche des biens…
+              <Loader2 className="size-4 animate-spin" /> Analyse de vos critères et recherche des biens… (jusqu&apos;à
+              30 s au premier message, le temps que le serveur se réveille)
             </div>
           )}
           {messages.length === 1 && (

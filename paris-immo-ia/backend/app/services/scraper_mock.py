@@ -39,15 +39,21 @@ def search_external(c: SearchCriteria, n: int = 12) -> list[Candidate]:
     results = []
     for i in range(n):
         q = quartiers()[targets[i % len(targets)]]
-        rooms = max(c.rooms_min or 1, rng.choice([1, 1, 2, 2, 3]))
+        # Le nombre de pièces demandé, parfois une de plus.
+        rooms = c.rooms_min + (rng.random() < 0.3) if c.rooms_min else rng.choice([1, 1, 2, 2, 3])
         furnished = c.furnished if c.furnished is not None else rng.random() < 0.5
         per_m2 = rng.uniform(28, 38) + (3 if furnished else 0)
         base_surface = {1: rng.uniform(18, 30), 2: rng.uniform(32, 48), 3: rng.uniform(50, 68)}.get(rooms, 80)
-        surface = round(max(base_surface, c.surface_min or 0) + rng.uniform(0, 4))
-        rent_cc = round(surface * per_m2 / 10) * 10
+        surface = max(base_surface, c.surface_min or 0)
         if c.budget_max:
-            # Les portails filtrent déjà côté serveur : on reste autour du budget.
-            rent_cc = min(rent_cc, round(c.budget_max * rng.uniform(0.85, 1.03)))
+            # Les portails filtrent déjà côté serveur : on reste autour du budget en ajustant
+            # la surface au prix du m², jamais en bradant le loyer.
+            surface = max(min(surface, c.budget_max * rng.uniform(0.85, 1.03) / per_m2), c.surface_min or 9)
+        surface = round(surface)
+        rooms = min(rooms, 1 + int(surface // 22))  # ~22 m² par pièce supplémentaire au plus
+        if c.rooms_min:
+            rooms = max(rooms, c.rooms_min)
+        rent_cc = round(surface * per_m2 / 10) * 10
         charges = round(rent_cc * 0.08 / 5) * 5
         features = set(c.must_have) | {f for f in EXTRA_FEATURES if rng.random() < 0.35}
         if furnished:

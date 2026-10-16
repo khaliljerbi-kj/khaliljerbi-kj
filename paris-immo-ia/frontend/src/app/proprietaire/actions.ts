@@ -5,7 +5,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { QUARTIERS, quartierBySlug } from "@/lib/quartiers";
-import { savePhotos, validatePhotos } from "@/lib/uploads";
+import { preparePhotos, validatePhotos } from "@/lib/uploads";
 
 const checkbox = z.preprocess((v) => v === "on" || v === "true", z.boolean());
 const int = (min: number, max: number, label: string) =>
@@ -59,7 +59,7 @@ export async function createProperty(_prev: FormState, formData: FormData): Prom
   const { email, name, availableFrom, quartier, ...data } = parsed.data;
   const q = quartierBySlug(quartier)!;
 
-  const photos = await savePhotos(files);
+  const photos = await preparePhotos(files);
   const owner = await prisma.user.upsert({
     where: { email },
     create: { email, name: name || null, role: "LANDLORD" },
@@ -75,7 +75,8 @@ export async function createProperty(_prev: FormState, formData: FormData): Prom
       // Position du micro-quartier ; à remplacer par un géocodage de l'adresse (BAN / Google).
       latitude: q.lat,
       longitude: q.lng,
-      photos,
+      photos: photos.urls,
+      photoFiles: { create: photos.create },
       availableFrom: availableFrom || null,
       status: "ACTIVE",
     },

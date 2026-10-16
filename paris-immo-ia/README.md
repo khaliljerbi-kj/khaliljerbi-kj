@@ -49,6 +49,8 @@ temps de trajet sont estimés et le micro utilise la Web Speech API du navigateu
 `ANTHROPIC_API_KEY` ou `OPENAI_API_KEY` pour la vraie compréhension du langage naturel,
 `OPENAI_API_KEY` pour Whisper, `GOOGLE_MAPS_API_KEY` pour les trajets réels.
 
+**Mettre en ligne gratuitement** (Neon + Render + Vercel) : voir [DEPLOIEMENT.md](DEPLOIEMENT.md).
+
 ## Fonctionnalités
 
 ### A. Chatbot locataire
@@ -91,10 +93,11 @@ email (SMTP, ou log en dev) si un bien dépasse 90 %, avec un lien de désabonne
 Server Action Next.js + Prisma + validation Zod : la fiche est en ligne immédiatement et matchée en priorité.
 Les DPE G sont refusés (interdits à la location depuis le 1er janvier 2025) ; surface minimale 9 m².
 
-**Photos** : jusqu'à 8 photos (JPEG, PNG, WebP, 8 Mo max) par glisser-déposer, avec aperçus, retrait et
-photo de couverture. Le format est vérifié par signature binaire (pas par l'extension), les fichiers sont
-renommés en UUID et stockés dans `frontend/uploads/` (`UPLOAD_DIR`), servis par la route `/photos/[file]`.
-Sur la Fiche Bien, elles s'affichent en carrousel.
+**Photos** : jusqu'à 8 photos (JPEG, PNG, WebP) par glisser-déposer, avec aperçus, retrait et photo de
+couverture. Elles sont redimensionnées et compressées dans le navigateur (1600 px, ~350 Ko) pour tenir
+sous la limite de 4,5 Mo par requête de Vercel, vérifiées par signature binaire côté serveur, puis
+stockées dans PostgreSQL (table `photos`) et servies par `/photos/[id]` avec un cache permanent. Aucun
+disque persistant n'est donc nécessaire. Sur la Fiche Bien, elles s'affichent en carrousel.
 
 ## Choix techniques
 
@@ -110,5 +113,5 @@ Sur la Fiche Bien, elles s'affichent en carrousel.
 - Géocodage des adresses (API Adresse BAN) : les biens sont placés au centre de leur micro-quartier.
 - Encadrement des loyers parisien : comparer le loyer saisi au loyer de référence majoré.
 - Sources externes réelles : passer par des flux partenaires plutôt que du scraping (CGU des portails).
-- Stockage des photos sur S3 / R2 (aujourd'hui disque local, non adapté à un déploiement multi-instances).
+- Photos sur un stockage objet (S3 / R2 / Vercel Blob) au-delà de quelques milliers de photos.
 - Streaming de la réponse du chat et cache des temps de trajet.

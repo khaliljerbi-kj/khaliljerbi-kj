@@ -2,6 +2,7 @@
 
 Prisma reste propriétaire des migrations ; ces classes ne créent rien en
 production (seuls les tests appellent Base.metadata.create_all sur SQLite).
+La table `photos` n'est utilisée que par Next.js et n'a pas de miroir ici.
 """
 
 import enum

@@ -97,6 +97,12 @@ async function main() {
     create: { email: "demo-proprietaire@paris-immo-ia.local", name: "Propriétaire démo", role: "LANDLORD" },
     update: {},
   });
+  // Exécuté à chaque déploiement Vercel : ne recrée les biens de démo que si besoin.
+  const force = process.argv.includes("--force");
+  if (!force && (await prisma.property.count({ where: { ownerId: owner.id } })) > 0) {
+    console.log("Biens de démonstration déjà présents (--force pour les recréer)");
+    return;
+  }
   await prisma.property.deleteMany({ where: { ownerId: owner.id } });
   await prisma.property.createMany({
     data: PROPERTIES.map((p) => {

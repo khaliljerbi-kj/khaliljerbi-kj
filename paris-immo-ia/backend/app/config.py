@@ -42,9 +42,11 @@ class Settings(BaseSettings):
     def sqlalchemy_url(self) -> str:
         # Prisma utilise "postgresql://", SQLAlchemy a besoin du driver explicite.
         url = self.database_url
-        if url.startswith("postgresql://"):
-            url = "postgresql+psycopg://" + url.removeprefix("postgresql://")
-        return url.split("?schema=")[0]
+        for prefix in ("postgresql://", "postgres://"):
+            if url.startswith(prefix):
+                url = "postgresql+psycopg://" + url.removeprefix(prefix)
+        # "?schema=" est propre à Prisma ; les autres paramètres (sslmode de Neon…) sont gardés.
+        return url.replace("?schema=public&", "?").split("?schema=")[0]
 
 
 @lru_cache

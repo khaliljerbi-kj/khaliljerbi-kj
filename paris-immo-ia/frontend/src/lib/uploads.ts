@@ -1,15 +1,14 @@
 import "server-only";
 
 import { randomUUID } from "node:crypto";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import path from "node:path";
 
-// Stockage disque pour le MVP ; à remplacer par S3 / R2 en production.
-// Hors de public/ : `next start` ne sert que les fichiers présents au moment du build.
-export const UPLOAD_DIR = process.env.UPLOAD_DIR ?? path.join(process.cwd(), "uploads");
+import { prisma } from "@/lib/prisma";
+
+// Photos stockées en base (table `photos`) : aucun disque persistant requis, ce qui
+// permet l'hébergement serverless (Vercel). Le navigateur les compresse avant envoi.
 
 export const MAX_PHOTOS = 8;
-export const MAX_PHOTO_BYTES = 8 * 1024 * 1024;
+export const MAX_PHOTO_BYTES = 3 * 1024 * 1024;
 
 const TYPES = {
   jpg: "image/jpeg",
@@ -18,7 +17,7 @@ const TYPES = {
 } as const;
 type Ext = keyof typeof TYPES;
 
-export const PHOTO_NAME = /^[0-9a-f-]{36}\.(jpg|png|webp)$/;
+export const PHOTO_NAME = /^([0-9a-f-]{36})\.(jpg|png|webp)$/;
 
 /** Identifie le format par sa signature binaire plutôt que par le type annoncé par le navigateur. */
 function sniff(bytes: Uint8Array): Ext | null {
@@ -33,32 +32,33 @@ function sniff(bytes: Uint8Array): Ext | null {
 export async function validatePhotos(files: File[]): Promise<string | null> {
   if (files.length > MAX_PHOTOS) return `${MAX_PHOTOS} photos maximum.`;
   for (const file of files) {
-    if (file.size > MAX_PHOTO_BYTES) return `« ${file.name} » dépasse 8 Mo.`;
+    if (file.size > MAX_PHOTO_BYTES) return `« ${file.name} » est trop lourde (3 Mo max).`;
     const head = new Uint8Array(await file.slice(0, 12).arrayBuffer());
     if (!sniff(head)) return `« ${file.name} » n'est pas une image JPEG, PNG ou WebP.`;
   }
   return null;
 }
 
-/** Enregistre les photos (déjà validées) et renvoie leurs URL publiques. */
-export async function savePhotos(files: File[]): Promise<string[]> {
-  await mkdir(UPLOAD_DIR, { recursive: true });
-  return Promise.all(
+/**
+ * Prépare des photos déjà validées : lignes à créer avec le bien (création imbriquée Prisma)
+ * et URL publiques correspondantes, dans l'ordre choisi par le propriétaire.
+ */
+export async function preparePhotos(files: File[]) {
+  const rows = await Promise.all(
     files.map(async (file) => {
       const bytes = new Uint8Array(await file.arrayBuffer());
-      const name = `${randomUUID()}.${sniff(bytes)!}`;
-      await writeFile(path.join(UPLOAD_DIR, name), bytes);
-      return `/photos/${name}`;
+      const ext = sniff(bytes)!;
+      return { id: randomUUID(), mimeType: TYPES[ext], data: bytes, ext };
     }),
   );
+  return {
+    create: rows.map(({ id, mimeType, data }) => ({ id, mimeType, data })),
+    urls: rows.map(({ id, ext }) => `/photos/${id}.${ext}`),
+  };
 }
 
 export async function readPhoto(name: string) {
-  if (!PHOTO_NAME.test(name)) return null;
-  try {
-    const data = await readFile(path.join(UPLOAD_DIR, name));
-    return { data, type: TYPES[name.split(".").pop() as Ext] };
-  } catch {
-    return null;
-  }
+  const match = PHOTO_NAME.exec(name);
+  if (!match) return null;
+  return prisma.photo.findUnique({ where: { id: match[1] }, select: { data: true, mimeType: true } });
 }
