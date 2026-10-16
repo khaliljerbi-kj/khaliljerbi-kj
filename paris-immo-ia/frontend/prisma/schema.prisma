@@ -1,0 +1,128 @@
+// Source de vérité du schéma PostgreSQL.
+// - Next.js (espace propriétaire) l'utilise via @prisma/client.
+// - FastAPI lit/écrit les mêmes tables via SQLAlchemy (backend/app/models.py) :
+//   toute modification ici doit y être répercutée.
+// Les identifiants et horodatages sont générés côté base pour que les deux
+// clients produisent des lignes valides.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TENANT
+  LANDLORD
+}
+
+enum DPE {
+  A
+  B
+  C
+  D
+  E
+  F
+  G
+}
+
+enum PropertyStatus {
+  DRAFT
+  ACTIVE
+  RENTED
+}
+
+model User {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email     String   @unique
+  name      String?
+  role      Role     @default(TENANT)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  properties Property[]
+  alerts     SearchAlert[]
+
+  @@map("users")
+}
+
+model Property {
+  id         String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId    String         @map("owner_id") @db.Uuid
+  owner      User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  status     PropertyStatus @default(ACTIVE)
+  photoFiles Photo[]
+
+  title          String
+  description    String
+  address        String
+  // Slug d'un micro-quartier de shared/quartiers.json
+  quartier       String
+  arrondissement Int
+  latitude       Float
+  longitude      Float
+
+  // Loyer charges comprises (CC) = rentHc + charges
+  rentHc      Int     @map("rent_hc")
+  charges     Int     @default(0)
+  surface     Float
+  rooms       Int
+  bedrooms    Int     @default(0)
+  floor       Int     @default(0)
+  hasElevator Boolean @default(false) @map("has_elevator")
+  furnished   Boolean @default(false)
+  dpe         DPE
+
+  // Critères de "lifestyle" exploités par le matching
+  hasFiber       Boolean @default(false) @map("has_fiber")
+  facesCourtyard Boolean @default(false) @map("faces_courtyard") // donne sur cour = calme
+  hasBalcony     Boolean @default(false) @map("has_balcony")
+  hasParking     Boolean @default(false) @map("has_parking")
+  hasCellar      Boolean @default(false) @map("has_cellar")
+  hasDishwasher  Boolean @default(false) @map("has_dishwasher")
+  petsAllowed    Boolean @default(false) @map("pets_allowed")
+
+  // URL publiques : "/photos/<id>.jpg" pour les photos envoyées, ou URL externes
+  photos        Json      @default("[]")
+  availableFrom DateTime? @map("available_from")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+
+  @@index([status, createdAt])
+  @@index([quartier])
+  @@map("properties")
+}
+
+// Photos envoyées par les propriétaires, stockées en base pour fonctionner sur un
+// hébergement sans disque persistant (Vercel). Non utilisée par le backend Python.
+model Photo {
+  id         String   @id @db.Uuid
+  propertyId String   @map("property_id") @db.Uuid
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  mimeType   String   @map("mime_type")
+  data       Bytes
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([propertyId])
+  @@map("photos")
+}
+
+model SearchAlert {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  // Objet SearchCriteria extrait par l'IA (cf. backend/app/schemas.py)
+  criteria       Json
+  // Phrase d'origine du locataire, réutilisée pour rédiger l'email
+  query          String
+  minScore       Int       @default(90) @map("min_score")
+  active         Boolean   @default(true)
+  lastCheckedAt  DateTime  @default(now()) @map("last_checked_at")
+  lastNotifiedAt DateTime? @map("last_notified_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  @@index([active])
+  @@map("search_alerts")
+}

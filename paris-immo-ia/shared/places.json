@@ -1,0 +1,24 @@
+{
+  "_doc": "Destinations fréquentes (écoles, pôles d'emploi, gares) pour le calcul de temps de trajet sans géocodage externe.",
+  "places": [
+    {"slug": "telecom-paris", "nom": "Télécom Paris (Palaiseau)", "aliases": ["telecom paris", "télécom paris", "telecom", "télécom", "ipp", "institut polytechnique"], "lat": 48.7128, "lng": 2.2003},
+    {"slug": "polytechnique", "nom": "École polytechnique (Palaiseau)", "aliases": ["polytechnique", "l'x", "ecole polytechnique"], "lat": 48.7133, "lng": 2.2089},
+    {"slug": "centralesupelec", "nom": "CentraleSupélec (Gif-sur-Yvette)", "aliases": ["centralesupelec", "centrale supelec", "centrale"], "lat": 48.7091, "lng": 2.1640},
+    {"slug": "paris-saclay", "nom": "Université Paris-Saclay", "aliases": ["paris-saclay", "paris saclay", "saclay"], "lat": 48.7110, "lng": 2.1700},
+    {"slug": "hec", "nom": "HEC Paris (Jouy-en-Josas)", "aliases": ["hec"], "lat": 48.7590, "lng": 2.1690},
+    {"slug": "sorbonne", "nom": "La Sorbonne", "aliases": ["sorbonne", "paris 1", "pantheon-sorbonne"], "lat": 48.8487, "lng": 2.3434},
+    {"slug": "jussieu", "nom": "Sorbonne Université – Jussieu", "aliases": ["jussieu", "sorbonne universite", "sorbonne université", "upmc"], "lat": 48.8467, "lng": 2.3557},
+    {"slug": "sciences-po", "nom": "Sciences Po", "aliases": ["sciences po", "sciencespo", "sciences-po"], "lat": 48.8541, "lng": 2.3283},
+    {"slug": "dauphine", "nom": "Université Paris-Dauphine", "aliases": ["dauphine"], "lat": 48.8708, "lng": 2.2747},
+    {"slug": "ens-ulm", "nom": "ENS Ulm", "aliases": ["ens", "ulm", "normale sup"], "lat": 48.8418, "lng": 2.3443},
+    {"slug": "escp", "nom": "ESCP (République)", "aliases": ["escp"], "lat": 48.8638, "lng": 2.3828},
+    {"slug": "la-defense", "nom": "La Défense", "aliases": ["la defense", "la défense", "defense", "défense"], "lat": 48.8919, "lng": 2.2381},
+    {"slug": "station-f", "nom": "Station F", "aliases": ["station f"], "lat": 48.8343, "lng": 2.3707},
+    {"slug": "chatelet", "nom": "Châtelet – Les Halles", "aliases": ["chatelet", "châtelet", "les halles"], "lat": 48.8584, "lng": 2.3470},
+    {"slug": "opera", "nom": "Opéra", "aliases": ["opera", "opéra", "saint-lazare", "saint lazare"], "lat": 48.8710, "lng": 2.3316},
+    {"slug": "gare-de-lyon", "nom": "Gare de Lyon", "aliases": ["gare de lyon"], "lat": 48.8443, "lng": 2.3743},
+    {"slug": "gare-du-nord", "nom": "Gare du Nord", "aliases": ["gare du nord"], "lat": 48.8809, "lng": 2.3553},
+    {"slug": "montparnasse-gare", "nom": "Gare Montparnasse", "aliases": ["gare montparnasse"], "lat": 48.8412, "lng": 2.3203},
+    {"slug": "pitie-salpetriere", "nom": "Hôpital Pitié-Salpêtrière", "aliases": ["pitie", "pitié", "salpetriere", "salpêtrière"], "lat": 48.8389, "lng": 2.3646}
+  ]
+}
