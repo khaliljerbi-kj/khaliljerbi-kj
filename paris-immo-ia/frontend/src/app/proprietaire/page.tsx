@@ -72,8 +72,16 @@ export default async function LandlordDashboard() {
             </p>
           )}
           {properties.map((p) => (
-            <div key={p.id} className="flex items-start justify-between gap-3 rounded-xl border bg-card p-4">
-              <div className="min-w-0">
+            <div key={p.id} className="flex items-start gap-3 rounded-xl border bg-card p-4">
+              {Array.isArray(p.photos) && typeof p.photos[0] === "string" ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={p.photos[0]} alt="" className="size-16 shrink-0 rounded-lg object-cover" />
+              ) : (
+                <div className="flex size-16 shrink-0 items-center justify-center rounded-lg bg-muted">
+                  <Building2 className="size-5 text-muted-foreground" />
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
                 <p className="truncate font-medium">{p.title}</p>
                 <p className="text-sm text-muted-foreground">
                   {quartierBySlug(p.quartier)?.nom ?? p.quartier} · {p.surface} m² · {euros(p.rentHc + p.charges)} CC ·

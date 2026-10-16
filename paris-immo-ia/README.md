@@ -91,6 +91,11 @@ email (SMTP, ou log en dev) si un bien dépasse 90 %, avec un lien de désabonne
 Server Action Next.js + Prisma + validation Zod : la fiche est en ligne immédiatement et matchée en priorité.
 Les DPE G sont refusés (interdits à la location depuis le 1er janvier 2025) ; surface minimale 9 m².
 
+**Photos** : jusqu'à 8 photos (JPEG, PNG, WebP, 8 Mo max) par glisser-déposer, avec aperçus, retrait et
+photo de couverture. Le format est vérifié par signature binaire (pas par l'extension), les fichiers sont
+renommés en UUID et stockés dans `frontend/uploads/` (`UPLOAD_DIR`), servis par la route `/photos/[file]`.
+Sur la Fiche Bien, elles s'affichent en carrousel.
+
 ## Choix techniques
 
 - **Prisma est la source de vérité du schéma** (`frontend/prisma/schema.prisma`) et gère les migrations.
@@ -105,5 +110,5 @@ Les DPE G sont refusés (interdits à la location depuis le 1er janvier 2025) ; 
 - Géocodage des adresses (API Adresse BAN) : les biens sont placés au centre de leur micro-quartier.
 - Encadrement des loyers parisien : comparer le loyer saisi au loyer de référence majoré.
 - Sources externes réelles : passer par des flux partenaires plutôt que du scraping (CGU des portails).
-- Upload de photos (S3 / R2) au lieu d'une URL.
+- Stockage des photos sur S3 / R2 (aujourd'hui disque local, non adapté à un déploiement multi-instances).
 - Streaming de la réponse du chat et cache des temps de trajet.

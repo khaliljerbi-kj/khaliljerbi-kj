@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 import { createProperty, type FormState } from "@/app/proprietaire/actions";
@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { NativeSelect } from "@/components/ui/native-select";
 import { Textarea } from "@/components/ui/textarea";
 import { QUARTIERS } from "@/lib/quartiers";
+
+import { PhotoPicker } from "./photo-picker";
 
 const FEATURES = [
   { name: "furnished", label: "Meublé" },
@@ -51,10 +53,13 @@ function Field({
 export function PropertyForm() {
   const [state, action, pending] = useActionState<FormState, FormData>(createProperty, { ok: false });
   const form = useRef<HTMLFormElement>(null);
+  const [resetKey, setResetKey] = useState(0);
   const e = state.errors;
 
   useEffect(() => {
-    if (state.ok) form.current?.reset();
+    if (!state.ok) return;
+    form.current?.reset();
+    setResetKey((k) => k + 1); // vide aussi les aperçus photo
   }, [state]);
 
   return (
@@ -152,9 +157,10 @@ export function PropertyForm() {
         </div>
       </fieldset>
 
-      <Field name="photoUrl" label="URL d'une photo (optionnel)" errors={e}>
-        <Input id="photoUrl" name="photoUrl" type="url" placeholder="https://…" />
-      </Field>
+      <fieldset>
+        <legend className="mb-3 text-sm font-semibold">Photos</legend>
+        <PhotoPicker key={resetKey} error={e?.photos?.[0]} />
+      </fieldset>
 
       <div className="flex flex-wrap items-center gap-4">
         <Button type="submit" size="lg" disabled={pending}>

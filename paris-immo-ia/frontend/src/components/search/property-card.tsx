@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { FEATURE_LABELS, type Dpe, type PropertyCardData } from "@/lib/types";
 import { cn, euros } from "@/lib/utils";
 
+import { PhotoCarousel } from "./photo-carousel";
+
 const DPE_COLORS: Record<Dpe, string> = {
   A: "bg-[#009c6d] text-white",
   B: "bg-[#52b153] text-white",
@@ -37,10 +39,14 @@ export function PropertyCard({ property: p, rank }: { property: PropertyCardData
   const extras = p.features.filter((f) => f !== "meuble");
   return (
     <Card className="gap-0 overflow-hidden py-0">
-      <div className="relative h-36 bg-gradient-to-br from-primary to-[oklch(0.45_0.08_250)] text-primary-foreground">
-        {p.photos[0] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={p.photos[0]} alt={p.title} className="absolute inset-0 size-full object-cover" />
+      <div
+        className={cn(
+          "relative bg-gradient-to-br from-primary to-[oklch(0.45_0.08_250)] text-primary-foreground",
+          p.photos.length ? "h-64" : "h-36",
+        )}
+      >
+        {p.photos.length ? (
+          <PhotoCarousel photos={p.photos} alt={p.title} />
         ) : (
           <div className="absolute inset-0 flex items-end p-4">
             <span className="font-serif text-3xl font-semibold opacity-90">{p.quartier_nom}</span>

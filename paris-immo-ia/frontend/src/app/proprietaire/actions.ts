@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { QUARTIERS, quartierBySlug } from "@/lib/quartiers";
+import { savePhotos, validatePhotos } from "@/lib/uploads";
 
 const checkbox = z.preprocess((v) => v === "on" || v === "true", z.boolean());
 const int = (min: number, max: number, label: string) =>
@@ -35,7 +36,6 @@ const PropertySchema = z.object({
   hasCellar: checkbox,
   hasDishwasher: checkbox,
   petsAllowed: checkbox,
-  photoUrl: z.union([z.literal(""), z.string().url("URL de photo invalide")]).optional(),
   availableFrom: z.union([z.literal(""), z.coerce.date()]).optional(),
 });
 
@@ -47,12 +47,19 @@ export type FormState = {
 
 export async function createProperty(_prev: FormState, formData: FormData): Promise<FormState> {
   const parsed = PropertySchema.safeParse(Object.fromEntries(formData));
-  if (!parsed.success) {
-    return { ok: false, message: "Certains champs sont à corriger.", errors: parsed.error.flatten().fieldErrors };
+  const files = formData.getAll("photos").filter((f): f is File => f instanceof File && f.size > 0);
+  const photoError = await validatePhotos(files);
+  if (!parsed.success || photoError) {
+    return {
+      ok: false,
+      message: "Certains champs sont à corriger.",
+      errors: { ...parsed.error?.flatten().fieldErrors, ...(photoError ? { photos: [photoError] } : {}) },
+    };
   }
-  const { email, name, photoUrl, availableFrom, quartier, ...data } = parsed.data;
+  const { email, name, availableFrom, quartier, ...data } = parsed.data;
   const q = quartierBySlug(quartier)!;
 
+  const photos = await savePhotos(files);
   const owner = await prisma.user.upsert({
     where: { email },
     create: { email, name: name || null, role: "LANDLORD" },
@@ -68,7 +75,7 @@ export async function createProperty(_prev: FormState, formData: FormData): Prom
       // Position du micro-quartier ; à remplacer par un géocodage de l'adresse (BAN / Google).
       latitude: q.lat,
       longitude: q.lng,
-      photos: photoUrl ? [photoUrl] : [],
+      photos,
       availableFrom: availableFrom || null,
       status: "ACTIVE",
     },
